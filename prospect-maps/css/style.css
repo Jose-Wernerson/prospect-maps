@@ -77,7 +77,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .table-wrapper { padding: 0 24px 40px; overflow-x: auto; }
 .loading-state, .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 15px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .leads-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.leads-table thead th { text-align: left; padding: 10px 14px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface); position: sticky; top: 60px; }
+.leads-table thead th { text-align: left; padding: 10px 14px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
 .leads-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
 .leads-table tbody tr:hover { background: var(--surface2); }
 .leads-table tbody td { padding: 10px 14px; vertical-align: middle; max-width: 220px; }
