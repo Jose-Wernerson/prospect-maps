@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prospect Maps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.ENV = {
+      SUPABASE_URL: 'https://ftieswdfalulxxkvzego.supabase.co',
+      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0aWVzd2RmYWx1bHh4a3Z6ZWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzM2MDEsImV4cCI6MjA5NTgwOTYwMX0.5SGTlhioMb5UUVMHz37Ovii2bJ2nE9PKniKWi73lvNc'
+    };
+  </script>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-left">
+      <span class="logo-icon">📍</span>
+      <span class="logo-text">Prospect<strong>Maps</strong></span>
+    </div>
+    <div class="header-right">
+      <span id="lead-count" class="lead-count">carregando...</span>
+      <button class="btn btn-ghost" onclick="UI.openImport()">⬆ Importar CSV</button>
+      <button class="btn btn-ghost" onclick="Leads.exportCSV()">⬇ Exportar</button>
+      <button class="btn btn-primary" onclick="UI.openModal()">+ Novo Lead</button>
+    </div>
+  </header>
+
+  <section id="dashboard" class="dashboard"></section>
+
+  <div class="filters-bar">
+    <input id="search" class="filter-input" type="text" placeholder="🔍 Buscar nome, telefone..." oninput="UI.applyFilters()" />
+    <select id="f-nicho" class="filter-select" onchange="UI.applyFilters()">
+      <option value="">Todos os nichos</option>
+    </select>
+    <select id="f-cidade" class="filter-select" onchange="UI.applyFilters()">
+      <option value="">Todas as cidades</option>
+    </select>
+    <select id="f-status" class="filter-select" onchange="UI.applyFilters()">
+      <option value="">Todos os status</option>
+      <option>Não contatado</option>
+      <option>Enviado</option>
+      <option>Respondeu</option>
+      <option>Negociou</option>
+      <option>Fechou</option>
+      <option>Não interessado</option>
+    </select>
+    <select id="f-site" class="filter-select" onchange="UI.applyFilters()">
+      <option value="">Site: todos</option>
+      <option value="Não">🔥 Sem site</option>
+      <option value="Sim">Com site</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" onclick="UI.clearFilters()">✕ Limpar</button>
+  </div>
+
+  <main class="table-wrapper">
+    <div id="loading" class="loading-state">Conectando ao Supabase...</div>
+    <table class="leads-table" id="leads-table" style="display:none">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Nicho</th>
+          <th>Telefone</th>
+          <th>Cidade</th>
+          <th>Site</th>
+          <th>Status</th>
+          <th>Obs</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="leads-body"></tbody>
+    </table>
+    <div id="empty-state" class="empty-state" style="display:none">
+      <p>Nenhum lead encontrado.</p>
+      <button class="btn btn-primary" onclick="UI.openImport()">⬆ Importar CSV</button>
+    </div>
+  </main>
+
+  <!-- Modal Lead -->
+  <div id="modal-lead" class="modal-overlay" style="display:none" onclick="if(event.target===this)UI.closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Novo Lead</h2>
+        <button class="btn-close" onclick="UI.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label>Nome *</label><input id="f-nome" type="text" class="form-input" placeholder="Nome da empresa" /></div>
+          <div class="form-group"><label>Nicho</label><input id="f-nicho-input" type="text" class="form-input" placeholder="Ex: Oficinas" /></div>
+          <div class="form-group"><label>Telefone (com DDI)</label><input id="f-tel" type="text" class="form-input" placeholder="5585999999999" /></div>
+          <div class="form-group"><label>Cidade</label><input id="f-cidade-input" type="text" class="form-input" placeholder="Fortaleza" /></div>
+          <div class="form-group"><label>Endereço</label><input id="f-end" type="text" class="form-input" placeholder="Rua, número" /></div>
+          <div class="form-group"><label>Dono / Contato</label><input id="f-dono" type="text" class="form-input" placeholder="Nome do responsável" /></div>
+          <div class="form-group"><label>Tem site?</label><select id="f-site-input" class="form-input"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+          <div class="form-group"><label>URL do site</label><input id="f-siteUrl" type="text" class="form-input" placeholder="https://..." /></div>
+          <div class="form-group"><label>Google Maps URL</label><input id="f-gmaps" type="text" class="form-input" placeholder="https://maps.google..." /></div>
+          <div class="form-group"><label>Social</label><input id="f-social" type="text" class="form-input" placeholder="Instagram, Facebook..." /></div>
+          <div class="form-group"><label>Var. Extra</label><input id="f-varExtra" type="text" class="form-input" placeholder="Ex: direção hidráulica" /></div>
+          <div class="form-group"><label>Concorrentes</label><input id="f-concorrentes" type="text" class="form-input" placeholder="Quem já tem site" /></div>
+          <div class="form-group full"><label>Observações</label><textarea id="f-obs" class="form-input" rows="3" placeholder="Notas sobre o lead..."></textarea></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="UI.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="Leads.save()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Importar CSV -->
+  <div id="modal-import" class="modal-overlay" style="display:none" onclick="if(event.target===this)UI.closeImport()">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>Importar CSV</h2>
+        <button class="btn-close" onclick="UI.closeImport()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Colunas esperadas: <code>nome, nicho, tel, end, cidade, gmaps, site, siteUrl, social, dono, concorrentes, status, data1, dataFU, obs, varExtra</code></p>
+        <input id="csv-file" type="file" accept=".csv" class="file-input" onchange="Leads.previewCSV(event)" />
+        <div id="csv-preview" class="csv-preview"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="UI.closeImport()">Cancelar</button>
+        <button id="btn-import-confirm" class="btn btn-primary" onclick="Leads.importCSV()" disabled>Importar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Template WhatsApp -->
+  <div id="modal-template" class="modal-overlay" style="display:none" onclick="if(event.target===this)UI.closeTemplate()">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>📲 Mensagem WhatsApp</h2>
+        <button class="btn-close" onclick="UI.closeTemplate()">✕</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="template-text" class="form-input" rows="12" style="font-size:13px;line-height:1.6"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="UI.closeTemplate()">Fechar</button>
+        <button class="btn btn-ghost" onclick="UI.copyTemplate()">📋 Copiar</button>
+        <button class="btn btn-whatsapp" onclick="UI.openWhatsApp()">💬 Abrir WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/templates.js"></script>
+  <script src="js/leads.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
