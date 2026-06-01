@@ -1,0 +1,26 @@
+# .gitignore gerado pelo assistente — ignorar ambientes virtuais e caches Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+venv*/
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+pip-wheel-metadata/
+
+# Testing / tooling
+.pytest_cache/
+.mypy_cache/
+
+# Local environment variables
+.env
