@@ -24,3 +24,5 @@ pip-wheel-metadata/
 
 # Local environment variables
 .env
+leads_oficina.csv
+.gitignore
