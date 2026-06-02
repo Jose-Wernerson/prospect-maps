@@ -212,10 +212,26 @@ const Leads = (() => {
   function openTemplate(id, isGestor = false) {
     const lead = _all.find(l => l.id === id);
     if (!lead) return;
-    const msg = buildMessage(lead, isGestor);
-    document.getElementById('template-text').value = msg;
-    document.getElementById('modal-template').dataset.tel = lead.tel || '';
-    document.getElementById('modal-template').style.display = 'flex';
+    const modal = document.getElementById('modal-template');
+    modal.dataset.leadId  = lead.id;
+    modal.dataset.isGestor = isGestor;
+    modal.dataset.tel      = lead.tel || '';
+    document.getElementById('template-text').value = buildMessage(lead, isGestor);
+    // Sincroniza botão ativo do profissional
+    const prof = getProfissional();
+    document.querySelectorAll('.prof-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.prof === prof.nome);
+    });
+    modal.style.display = 'flex';
+  }
+
+  /** Regenera a mensagem do modal com o profissional atual */
+  function refreshTemplate() {
+    const modal = document.getElementById('modal-template');
+    if (!modal || modal.style.display === 'none' || !modal.dataset.leadId) return;
+    const lead = _all.find(l => l.id === modal.dataset.leadId);
+    if (!lead) return;
+    document.getElementById('template-text').value = buildMessage(lead, modal.dataset.isGestor === 'true');
   }
 
   // helpers
@@ -236,5 +252,60 @@ const Leads = (() => {
     return result;
   }
 
-  return { fetchAll, getAll, edit, save, cycleStatus, remove, previewCSV, importCSV, exportCSV, openTemplate, getEditId, clearEditId };
+  /** Salva alterações em massa nos leads selecionados */
+  async function bulkSave() {
+    const ids = UI.getSelectedIds();
+    if (!ids.size) return;
+
+    const status = document.getElementById('bulk-status').value;
+    const nicho  = document.getElementById('bulk-nicho').value.trim();
+    const cidade = document.getElementById('bulk-cidade').value.trim();
+    const site   = document.getElementById('bulk-site').value;
+    const obs    = document.getElementById('bulk-obs').value.trim();
+
+    const patch = {};
+    if (status) patch.status = status;
+    if (nicho)  patch.nicho  = nicho;
+    if (cidade) patch.cidade = cidade;
+    if (site)   patch.site   = site;
+    if (obs)    patch.obs    = obs;
+
+    if (!Object.keys(patch).length) {
+      UI.toast('Preencha ao menos um campo para alterar', 'red');
+      return;
+    }
+
+    const btn = document.getElementById('btn-bulk-save');
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    const { error } = await App.db.from(TABLE).update(patch).in('id', [...ids]);
+
+    btn.disabled = false;
+    btn.textContent = 'Salvar';
+
+    if (error) { UI.toast('Erro: ' + error.message, 'red'); return; }
+
+    UI.toast(`${ids.size} leads atualizados ✓`, 'green');
+    UI.exitBulkMode();
+    UI.closeBulkEdit();
+    await App.reload();
+  }
+
+  /** Remove todos os leads selecionados */
+  async function bulkRemove() {
+    const ids = UI.getSelectedIds();
+    if (!ids.size) return;
+    if (!confirm(`Apagar ${ids.size} lead${ids.size !== 1 ? 's' : ''} selecionado${ids.size !== 1 ? 's' : ''}?`)) return;
+
+    const { error } = await App.db.from(TABLE).delete().in('id', [...ids]);
+
+    if (error) { UI.toast('Erro ao apagar: ' + error.message, 'red'); return; }
+
+    UI.toast(`${ids.size} leads removidos`, 'red');
+    UI.exitBulkMode();
+    await App.reload();
+  }
+
+  return { fetchAll, getAll, edit, save, cycleStatus, remove, previewCSV, importCSV, exportCSV, openTemplate, refreshTemplate, getEditId, clearEditId, bulkSave, bulkRemove };
 })();

@@ -16,6 +16,8 @@ const UI = (() => {
 
   let _toastTimer = null;
   let _filteredCache = [];
+  let _selectedIds = new Set();
+  let _bulkMode = false;
 
   /* ── TABELA ── */
 
@@ -37,7 +39,12 @@ const UI = (() => {
     empty.style.display = 'none';
     table.style.display = 'table';
 
-    tbody.innerHTML = leads.map(l => {
+    const _allChecked = _filteredCache.length > 0 && _filteredCache.every(l => _selectedIds.has(l.id));
+    const _someChecked = _filteredCache.some(l => _selectedIds.has(l.id));
+    const checkAllEl = document.getElementById('check-all');
+    if (checkAllEl) { checkAllEl.checked = _allChecked; checkAllEl.indeterminate = !_allChecked && _someChecked; }
+
+    tbody.innerHTML = leads.map((l, idx) => {
       const siteBadge = l.site === 'Não'
         ? `<span class="badge badge-sem">🔥 Sem site</span>`
         : `<span class="badge badge-com">✓ Tem site</span>`;
@@ -55,8 +62,12 @@ const UI = (() => {
         ? `<button class="action-btn" title="Ver site" onclick="window.open('${l.siteUrl}','_blank')">🌐</button>`
         : '';
 
+      const sel = _selectedIds.has(l.id);
+
       return `
-        <tr>
+        <tr class="${sel ? 'row-selected' : ''}">
+          <td class="td-num">${idx + 1}</td>
+          <td class="td-check"><input type="checkbox" class="row-checkbox" ${sel ? 'checked' : ''} onchange="UI.toggleRow('${l.id}', this.checked)" /></td>
           <td class="cell-nome" title="${esc(l.nome)}">${esc(l.nome)}</td>
           <td>${nicho}</td>
           <td class="cell-tel">${l.tel ? formatTel(l.tel) : '—'}</td>
@@ -163,6 +174,90 @@ const UI = (() => {
     document.getElementById('modal-import').style.display = 'none';
   }
 
+  /* ── SELEÇÃO EM MASSA ── */
+
+  function toggleSelectAll(checked) {
+    _filteredCache.forEach(l => {
+      if (checked) _selectedIds.add(l.id);
+      else _selectedIds.delete(l.id);
+    });
+    renderTable(_filteredCache);
+    updateBulkBar();
+  }
+
+  function toggleRow(id, checked) {
+    if (checked) _selectedIds.add(id);
+    else _selectedIds.delete(id);
+    const row = document.querySelector(`input.row-checkbox[onchange*="'${id}'"]`);
+    if (row) row.closest('tr').classList.toggle('row-selected', checked);
+    const checkAll = document.getElementById('check-all');
+    if (checkAll) {
+      const allSel = _filteredCache.every(l => _selectedIds.has(l.id));
+      const someSel = _filteredCache.some(l => _selectedIds.has(l.id));
+      checkAll.checked = allSel;
+      checkAll.indeterminate = !allSel && someSel;
+    }
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const bar = document.getElementById('bulk-bar');
+    const count = document.getElementById('bulk-count');
+    if (_selectedIds.size > 0) {
+      bar.classList.remove('hidden');
+      count.textContent = `${_selectedIds.size} selecionado${_selectedIds.size !== 1 ? 's' : ''}`;
+    } else {
+      bar.classList.add('hidden');
+    }
+  }
+
+  function clearSelection() {
+    _selectedIds.clear();
+    renderTable(_filteredCache);
+    updateBulkBar();
+  }
+
+  function toggleBulkMode() {
+    _bulkMode = !_bulkMode;
+    const table = document.getElementById('leads-table');
+    if (table) table.classList.toggle('bulk-mode', _bulkMode);
+    const btn = document.getElementById('btn-bulk-toggle');
+    if (btn) btn.classList.toggle('active', _bulkMode);
+    if (!_bulkMode) { _selectedIds.clear(); updateBulkBar(); }
+  }
+
+  function exitBulkMode() {
+    if (!_bulkMode) return;
+    _bulkMode = false;
+    const table = document.getElementById('leads-table');
+    if (table) table.classList.remove('bulk-mode');
+    const btn = document.getElementById('btn-bulk-toggle');
+    if (btn) btn.classList.remove('active');
+    _selectedIds.clear();
+    updateBulkBar();
+  }
+
+  function getSelectedIds() { return _selectedIds; }
+
+  function openBulkEdit() {
+    if (!_selectedIds.size) return;
+    document.getElementById('bulk-hint').textContent =
+      `Editando ${_selectedIds.size} lead${_selectedIds.size !== 1 ? 's' : ''}. Preencha apenas os campos que deseja alterar.`;
+    document.getElementById('bulk-status').value = '';
+    document.getElementById('bulk-site').value   = '';
+    document.getElementById('bulk-nicho').value  = '';
+    document.getElementById('bulk-cidade').value = '';
+    document.getElementById('bulk-obs').value    = '';
+    const btn = document.getElementById('btn-bulk-save');
+    btn.disabled = false;
+    btn.textContent = 'Salvar';
+    document.getElementById('modal-bulk').style.display = 'flex';
+  }
+
+  function closeBulkEdit() {
+    document.getElementById('modal-bulk').style.display = 'none';
+  }
+
   function closeTemplate() {
     document.getElementById('modal-template').style.display = 'none';
   }
@@ -211,6 +306,9 @@ const UI = (() => {
     openModal, closeModal,
     openImport, closeImport,
     closeTemplate, copyTemplate, openWhatsApp,
-    toast
+    toast,
+    toggleSelectAll, toggleRow, clearSelection, getSelectedIds,
+    openBulkEdit, closeBulkEdit,
+    toggleBulkMode, exitBulkMode,
   };
 })();

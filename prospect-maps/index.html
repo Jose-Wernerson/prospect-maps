@@ -27,8 +27,7 @@
     <div class="header-right">
       <span id="lead-count" class="lead-count">carregando...</span>
       <button class="btn btn-ghost" onclick="UI.openImport()">⬆ Importar CSV</button>
-      <button class="btn btn-ghost" onclick="Leads.exportCSV()">⬇ Exportar</button>
-      <button class="btn btn-primary" onclick="UI.openModal()">+ Novo Lead</button>
+      <button class="btn btn-ghost" onclick="Leads.exportCSV()">⬇ Exportar</button>      <button id="btn-bulk-toggle" class="btn btn-ghost" onclick="UI.toggleBulkMode()" title="Selecionar leads em massa">&#x2705; Selecionar</button>      <button class="btn btn-primary" onclick="UI.openModal()">+ Novo Lead</button>
     </div>
   </header>
 
@@ -64,6 +63,8 @@
     <table class="leads-table" id="leads-table" style="display:none">
       <thead>
         <tr>
+          <th class="th-num">#</th>
+          <th class="th-check"><input type="checkbox" id="check-all" class="row-checkbox" title="Selecionar todos" onchange="UI.toggleSelectAll(this.checked)" /></th>
           <th>Nome</th>
           <th>Nicho</th>
           <th>Telefone</th>
@@ -140,12 +141,81 @@
         <button class="btn-close" onclick="UI.closeTemplate()">✕</button>
       </div>
       <div class="modal-body">
+        <div class="prof-selector">
+          <span class="prof-label">Remetente</span>
+          <div class="prof-btns">
+            <button class="prof-btn" data-prof="José Wernerson" onclick="setProfissional('José Wernerson')">José Wernerson</button>
+            <button class="prof-btn" data-prof="Diego Fagundes" onclick="setProfissional('Diego Fagundes')">Diego Fagundes</button>
+            <button class="prof-btn" data-prof="José Francisco" onclick="setProfissional('José Francisco')">José Francisco</button>
+          </div>
+        </div>
         <textarea id="template-text" class="form-input" rows="12" style="font-size:13px;line-height:1.6"></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="UI.closeTemplate()">Fechar</button>
         <button class="btn btn-ghost" onclick="UI.copyTemplate()">📋 Copiar</button>
         <button class="btn btn-whatsapp" onclick="UI.openWhatsApp()">💬 Abrir WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de ações em massa -->
+  <div id="bulk-bar" class="bulk-bar hidden">
+    <span id="bulk-count" class="bulk-count">0 selecionados</span>
+    <div class="bulk-sep"></div>
+    <button class="btn btn-ghost btn-sm" onclick="UI.openBulkEdit()">✏️ Editar campos</button>
+    <button class="btn btn-sm btn-danger" onclick="Leads.bulkRemove()">🗑 Excluir</button>
+    <div class="bulk-sep"></div>
+    <button class="btn btn-ghost btn-sm" onclick="UI.exitBulkMode()">✕ Cancelar</button>
+  </div>
+
+  <!-- Modal Editar em Massa -->
+  <div id="modal-bulk" class="modal-overlay" style="display:none" onclick="if(event.target===this)UI.closeBulkEdit()">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>✏️ Editar em massa</h2>
+        <button class="btn-close" onclick="UI.closeBulkEdit()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint" id="bulk-hint">Preencha apenas os campos que deseja alterar nos leads selecionados. Campos vazios são ignorados.</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Status</label>
+            <select id="bulk-status" class="form-input">
+              <option value="">— Não alterar —</option>
+              <option>Não contatado</option>
+              <option>Enviado</option>
+              <option>Respondeu</option>
+              <option>Negociou</option>
+              <option>Fechou</option>
+              <option>Não interessado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tem site?</label>
+            <select id="bulk-site" class="form-input">
+              <option value="">— Não alterar —</option>
+              <option value="Não">Não</option>
+              <option value="Sim">Sim</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nicho</label>
+            <input id="bulk-nicho" type="text" class="form-input" placeholder="Deixe vazio para não alterar" />
+          </div>
+          <div class="form-group">
+            <label>Cidade</label>
+            <input id="bulk-cidade" type="text" class="form-input" placeholder="Deixe vazio para não alterar" />
+          </div>
+          <div class="form-group full">
+            <label>Observações</label>
+            <textarea id="bulk-obs" class="form-input" rows="3" placeholder="Deixe vazio para não alterar"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="UI.closeBulkEdit()">Cancelar</button>
+        <button id="btn-bulk-save" class="btn btn-primary" onclick="Leads.bulkSave()">Salvar</button>
       </div>
     </div>
   </div>

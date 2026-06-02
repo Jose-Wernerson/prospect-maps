@@ -63,6 +63,30 @@ const TEMPLATES = {
 /**
  * Gera mensagem preenchida para um lead específico
  */
+
+/** Profissionais que podem enviar mensagens */
+const PROFISSIONAIS = [
+  { nome: 'José Wernerson',  primeiro: 'José wernerson' },
+  { nome: 'Diego Fagundes',  primeiro: 'Diego Fagundes' },
+  { nome: 'José Francisco', primeiro: 'José Francisco' },
+];
+
+let _profAtual = (() => {
+  try { const s = localStorage.getItem('pm_prof'); return s ? JSON.parse(s) : PROFISSIONAIS[0]; }
+  catch { return PROFISSIONAIS[0]; }
+})();
+
+function getProfissional() { return _profAtual; }
+
+function setProfissional(nome) {
+  _profAtual = PROFISSIONAIS.find(p => p.nome === nome) || PROFISSIONAIS[0];
+  try { localStorage.setItem('pm_prof', JSON.stringify(_profAtual)); } catch {}
+  document.querySelectorAll('.prof-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.prof === _profAtual.nome);
+  });
+  if (typeof Leads !== 'undefined') Leads.refreshTemplate();
+}
+
 function buildMessage(lead, isGestor = false) {
   let tmpl;
   const hasSite = lead.site && lead.site !== 'Não';
@@ -75,9 +99,11 @@ function buildMessage(lead, isGestor = false) {
     tmpl = TEMPLATES[lead.nicho] || TEMPLATES.Oficinas;
   }
   const dono = lead.dono ? lead.dono.split(' ')[0] : 'pessoal';
+  const prof = _profAtual ? _profAtual.primeiro : 'José';
   return tmpl
     .replace(/{NOME}/g,   lead.nome     || '')
     .replace(/{DONO}/g,   dono)
     .replace(/{CIDADE}/g, lead.cidade   || '')
-    .replace(/{VAR}/g,    lead.varExtra || lead.nicho || '');
+    .replace(/{VAR}/g,    lead.varExtra || lead.nicho || '')
+    .replace(/José da Squad4Tech/g, `${prof} da Squad4Tech`);
 }
