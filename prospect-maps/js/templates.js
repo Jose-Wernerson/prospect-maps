@@ -66,7 +66,7 @@ const TEMPLATES = {
 
 /** Profissionais que podem enviar mensagens */
 const PROFISSIONAIS = [
-  { nome: 'José Wernerson',  primeiro: 'José wernerson' },
+  { nome: 'José Wernerson',  primeiro: 'José Wernerson' },
   { nome: 'Diego Fagundes',  primeiro: 'Diego Fagundes' },
   { nome: 'José Francisco', primeiro: 'José Francisco' },
 ];
@@ -90,13 +90,22 @@ function setProfissional(nome) {
 function buildMessage(lead, isGestor = false) {
   let tmpl;
   const hasSite = lead.site && lead.site !== 'Não';
+  const nicho = lead.nicho || '';
 
-  if (isGestor && lead.nicho === 'Oficinas') {
+  // busca case-insensitive e sem espaços para tolerar variações como "Pet Shop" vs "Petshop"
+  function findTmpl(key) {
+    if (TEMPLATES[key]) return TEMPLATES[key];
+    const lk = key.replace(/\s+/g, '').toLowerCase();
+    const found = Object.keys(TEMPLATES).find(k => k.replace(/\s+/g, '').toLowerCase() === lk);
+    return found ? TEMPLATES[found] : null;
+  }
+
+  if (isGestor && nicho === 'Oficinas') {
     tmpl = TEMPLATES.OficinasGestor;
-  } else if (hasSite && TEMPLATES[lead.nicho + 'ComSite']) {
-    tmpl = TEMPLATES[lead.nicho + 'ComSite'];
+  } else if (hasSite) {
+    tmpl = findTmpl(nicho + 'ComSite') || findTmpl(nicho) || TEMPLATES.Oficinas;
   } else {
-    tmpl = TEMPLATES[lead.nicho] || TEMPLATES.Oficinas;
+    tmpl = findTmpl(nicho) || TEMPLATES.Oficinas;
   }
   const dono = lead.dono ? lead.dono.split(' ')[0] : 'pessoal';
   const prof = _profAtual ? _profAtual.primeiro : 'José';
