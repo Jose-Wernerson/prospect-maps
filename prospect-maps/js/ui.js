@@ -18,6 +18,7 @@ const UI = (() => {
   let _filteredCache = [];
   let _selectedIds = new Set();
   let _bulkMode = false;
+  let _telVisible = false;
 
   /* ── TABELA ── */
 
@@ -70,7 +71,7 @@ const UI = (() => {
           <td class="td-check"><input type="checkbox" class="row-checkbox" ${sel ? 'checked' : ''} onchange="UI.toggleRow('${l.id}', this.checked)" /></td>
           <td class="cell-nome" title="${esc(l.nome)}">${esc(l.nome)}</td>
           <td>${nicho}</td>
-          <td class="cell-tel">${l.tel ? formatTel(l.tel) : '—'}</td>
+          <td class="cell-tel">${l.tel ? (_telVisible ? formatTel(l.tel) : maskTel(l.tel)) : '—'}</td>
           <td>${esc(l.cidade || '—')}</td>
           <td>${siteBadge}</td>
           <td>
@@ -292,12 +293,26 @@ const UI = (() => {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  function maskTel(tel) {
+    const d = tel.replace(/\D/g,'');
+    // mostra o DDD e mascara o restante: (85) •••••-••••
+    if (d.length >= 12) return `(${d.slice(2,4)}) •••••-••••`;
+    return '••••••••••';
+  }
+
   function formatTel(tel) {
     // 5585999999999 → (85) 99999-9999
     const d = tel.replace(/\D/g,'');
     if (d.length === 13) return `(${d.slice(2,4)}) ${d.slice(4,9)}-${d.slice(9)}`;
     if (d.length === 12) return `(${d.slice(2,4)}) ${d.slice(4,8)}-${d.slice(8)}`;
     return tel;
+  }
+
+  function toggleTelVisible() {
+    _telVisible = !_telVisible;
+    const btn = document.getElementById('btn-tel-eye');
+    if (btn) btn.classList.toggle('active', _telVisible);
+    renderTable(_filteredCache);
   }
 
   return {
@@ -310,5 +325,6 @@ const UI = (() => {
     toggleSelectAll, toggleRow, clearSelection, getSelectedIds,
     openBulkEdit, closeBulkEdit,
     toggleBulkMode, exitBulkMode,
+    toggleTelVisible,
   };
 })();
