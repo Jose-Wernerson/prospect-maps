@@ -53,6 +53,11 @@ const TEMPLATES = {
 
   RestaurantesComSite: `Olá {DONO}, tudo bem?\n\nSou José da Squad4Tech. Vi o *{NOME}* no Google Maps e acessei o site de vocês.\n\nNotei que o site poderia melhorar bastante — cardápio mais visual, botão de reserva pelo WhatsApp e um SEO melhor pra aparecer antes da concorrência em {CIDADE}.\n\nIsso faz muita diferença na quantidade de clientes que chegam até vocês pelo Google.\n\nPosso te mandar um exemplo rápido?`,
 
+  /* ── LOJA AGRO ───────────────────────────────────────────────────── */
+  LojaAgro: `Olá {DONO}, tudo bem?\n\nSou José da Squad4Tech, desenvolvedor web. Vi a *{NOME}* no Google Maps e notei algo importante:\n\nQuando busquei *loja agro em {CIDADE}* no Google, 3 concorrentes aparecem antes — todos com site profissional.\n\nAjudamos lojas do agro a captar mais clientes pelo Google com site + SEO local.\n\nPosso te mostrar um exemplo rápido de como isso funcionaria pra vocês?`,
+
+  LojaAgroComSite: `Olá {DONO}, tudo bem?\n\nSou José da Squad4Tech. Vi a *{NOME}* no Google Maps e acessei o site de vocês.\n\nNotei que o site poderia melhorar bastante — mais velocidade, SEO local otimizado e um botão de WhatsApp pra converter visitas em contatos na hora.\n\nEssas melhorias fazem muita diferença no número de clientes novos que chegam pelo Google.\n\nPosso te mostrar o que ficaria diferente numa comparação rápida?`,
+
   /* ── PETSHOP ──────────────────────────────────────────────────────── */
   Petshop: `Olá {DONO}, tudo bem?\n\nSou José da Squad4Tech. Vi o *{NOME}* no Google Maps.\n\nPetshops sem site perdem clientes que buscam no Google antes de ligar — especialmente pra banho, tosa e consultas veterinárias.\n\nCriamos sites com agendamento online, WhatsApp integrado e boa posição no Google local.\n\nPosso te mostrar um exemplo rápido?`,
 
@@ -90,7 +95,12 @@ function setProfissional(nome) {
 function buildMessage(lead, isGestor = false) {
   let tmpl;
   const hasSite = lead.site && lead.site !== 'Não';
-  const nicho = lead.nicho || '';
+  // Normaliza nicho para bater com as chaves do TEMPLATES
+  // ex: "loja agro" → "LojaAgro", "pet shop" → "Petshop"
+  const nicho = (lead.nicho || '')
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join('');
 
   // busca case-insensitive e sem espaços para tolerar variações como "Pet Shop" vs "Petshop"
   function findTmpl(key) {
